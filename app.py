@@ -1,22 +1,24 @@
 import streamlit as st
 from google import genai
-import time
+import os
 
-st.set_page_config(page_title="ATLAS | Asistan", page_icon="🧠", layout="wide")
+st.set_page_config(page_title="ATLAS | Asistan", layout="wide")
 
-# API İstemcisini oluştur
-try:
-    client = genai.Client(api_key=st.secrets["GEMINI_API_KEY"])
-except Exception as e:
-    st.error("API Anahtarı hatası!")
+# API Anahtarını güvenli yükle
+api_key = st.secrets.get("GEMINI_API_KEY")
+if not api_key:
+    st.error("Secrets içerisinde GEMINI_API_KEY tanımlı değil!")
     st.stop()
+
+# Client başlat
+client = genai.Client(api_key=api_key)
 
 st.title("🧠 ATLAS | Dijital Sağ Kolum")
 
-# Streaming fonksiyonu (Daha kararlı yapı)
+# Streaming fonksiyonunu daha esnek yapalım
 def stream_ai_response(prompt):
     try:
-        # İsteği gönder
+        # İsteği basitleştirelim
         response = client.models.generate_content_stream(
             model='gemini-1.5-flash',
             contents=prompt
@@ -27,12 +29,9 @@ def stream_ai_response(prompt):
     except Exception as e:
         yield f"Hata oluştu: {str(e)}"
 
-# Arayüz
-kategori = st.text_input("Kategori girin:")
+gorev = st.sidebar.radio("Görev:", ["İçerik Stratejisi", "Emlak İlanı"])
+kategori = st.text_input("Girdi:")
+
 if st.button("Üret"):
-    if kategori:
-        with st.chat_message("assistant"):
-            # st.write_stream kullanırken yanıtı izle
-            st.write_stream(stream_ai_response(f"{kategori} için Pinterest stratejisi yaz."))
-    else:
-        st.warning("Lütfen bir kategori girin.")
+    with st.chat_message("assistant"):
+        st.write_stream(stream_ai_response(f"{kategori} hakkında içerik üret."))
