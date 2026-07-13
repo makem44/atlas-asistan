@@ -1,43 +1,39 @@
-# app.py dosyanın en üstüne şunu ekle:
-try:
-    api_key = st.secrets["GEMINI_API_KEY"]
-    st.sidebar.success("API Anahtarı başarıyla yüklendi!")
-except Exception:
-    st.sidebar.error("API Anahtarı bulunamadı! Secrets ayarlarını kontrol et.")
 import streamlit as st
 from google import genai
 import os
 
-# Sayfa Ayarları
+# 1. EN ÜSTTE OLMASI ZORUNLU
 st.set_page_config(page_title="ATLAS | Asistan", page_icon="🧠", layout="wide")
 
-# Güvenli API Bağlantısı
+# 2. BAĞLANTI KURULUŞU
 @st.cache_resource
 def get_client():
-    # Secrets'tan anahtarı al
     api_key = st.secrets["GEMINI_API_KEY"]
-    # Client'ı oluştur
     return genai.Client(api_key=api_key)
 
 try:
     client = get_client()
+    st.sidebar.success("Sistem Bağlantısı Başarılı!")
 except Exception as e:
-    st.error(f"Bağlantı hatası: {e}")
+    st.sidebar.error("API Anahtarı bulunamadı! Secrets ayarlarını kontrol et.")
     st.stop()
 
+# 3. UYGULAMA GÖVDESİ
 st.title("🧠 ATLAS | Dijital Sağ Kolum")
-# ... (sidebar ve diğer kısımlar aynı kalabilir)
 
-# Streaming Fonksiyonunu Güncelleyelim
 def stream_ai_response(prompt):
-    # 'gemini-1.5-flash' genelde daha yüksek başarı oranına sahiptir
     response = client.models.generate_content_stream(
         model='gemini-1.5-flash',
         contents=prompt
     )
     for chunk in response:
-        # chunk.text'in boş gelme ihtimaline karşı kontrol
         if chunk.text:
             yield chunk.text
 
-# İçerik ve Emlak kısımlarını kodundaki gibi bırak...
+gorev = st.sidebar.radio("Görev Seç:", ["İçerik Stratejisi", "Emlak İlanı"])
+
+if gorev == "İçerik Stratejisi":
+    kategori = st.text_input("Kategori:")
+    if st.button("Üret"):
+        with st.chat_message("assistant"):
+            st.write_stream(stream_ai_response(f"{kategori} için strateji yaz."))
