@@ -1,3 +1,9 @@
+# app.py dosyanın en üstüne şunu ekle:
+try:
+    api_key = st.secrets["GEMINI_API_KEY"]
+    st.sidebar.success("API Anahtarı başarıyla yüklendi!")
+except Exception:
+    st.sidebar.error("API Anahtarı bulunamadı! Secrets ayarlarını kontrol et.")
 import streamlit as st
 from google import genai
 import os
